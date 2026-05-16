@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Accesso — GestioneCantieri</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    body {
+      min-height: 100vh;
+      background: #1a1f2e;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    /* subtle grid pattern */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.03) 1px, transparent 1px);
+      background-size: 32px 32px;
+      pointer-events: none;
+    }
+
+    .login-card {
+      width: 100%;
+      max-width: 420px;
+      background: #fff;
+      border-radius: 1rem;
+      box-shadow: 0 20px 60px rgba(0,0,0,.4);
+      overflow: hidden;
+    }
+
+    .login-header {
+      background: #212529;
+      padding: 2rem 2rem 1.5rem;
+      text-align: center;
+    }
+
+    .login-body {
+      padding: 2rem;
+    }
+
+    .brand-icon {
+      width: 52px; height: 52px;
+      background: #ffc107;
+      border-radius: .75rem;
+      display: inline-flex; align-items: center; justify-content: center;
+      margin-bottom: .75rem;
+    }
+
+    .form-control:focus {
+      border-color: #ffc107;
+      box-shadow: 0 0 0 .2rem rgba(255,193,7,.2);
+    }
+
+    .btn-login {
+      background: #212529;
+      color: #fff;
+      border: none;
+      padding: .7rem;
+      font-weight: 600;
+      letter-spacing: .02em;
+      transition: background .2s;
+    }
+    .btn-login:hover { background: #343a40; color: #fff; }
+    .btn-login:active { background: #1a1f25; color: #fff; }
+
+    .role-badge {
+      display: inline-flex; align-items: center; gap: .3rem;
+      font-size: .72rem; padding: .3rem .6rem;
+      border-radius: 99px; cursor: pointer;
+      border: 1.5px solid transparent;
+      transition: all .15s;
+    }
+    .role-badge.active {
+      border-color: #212529;
+      background: #212529;
+      color: #ffc107;
+    }
+    .role-badge:not(.active) {
+      border-color: #dee2e6;
+      background: #f8f9fa;
+      color: #6c757d;
+    }
+    .role-badge:not(.active):hover {
+      border-color: #adb5bd;
+      background: #e9ecef;
+      color: #343a40;
+    }
+
+    .input-icon { color: #adb5bd; }
+
+    .divider {
+      display: flex; align-items: center; gap: .75rem;
+      color: #adb5bd; font-size: .78rem; margin: 1.25rem 0;
+    }
+    .divider::before, .divider::after {
+      content: ''; flex: 1; height: 1px; background: #dee2e6;
+    }
+
+    .demo-accounts { font-size: .75rem; }
+    .demo-accounts td { padding: .25rem .4rem; }
+    .demo-accounts tr:hover td { background: #f8f9fa; cursor: pointer; }
+
+    /* shake animation on error */
+    @keyframes shake {
+      0%,100%{ transform:translateX(0) }
+      20%{ transform:translateX(-6px) }
+      40%{ transform:translateX(6px) }
+      60%{ transform:translateX(-4px) }
+      80%{ transform:translateX(4px) }
+    }
+    .shake { animation: shake .4s ease; }
+  </style>
+</head>
+<body>
+
+<div class="login-card">
+
+  <!-- HEADER -->
+  <div class="login-header">
+    <div class="brand-icon">
+      <i class="bi bi-building-fill-gear fs-4 text-dark"></i>
+    </div>
+    <h5 class="text-white fw-bold mb-0">GestioneCantieri</h5>
+    <small class="text-secondary">Gestionale edile — v1.0</small>
+  </div>
+
+  <!-- BODY -->
+  <div class="login-body">
+
+    <h6 class="fw-semibold mb-1">Accedi al gestionale</h6>
+    <p class="text-muted small mb-3">Inserisci le tue credenziali per continuare.</p>
+
+    <!-- ERROR ALERT (shown by Performer on res='no') -->
+    <div class="collapse mb-3" id="alert">
+      <div class="alert alert-danger d-flex align-items-center gap-2 py-2 small mb-0">
+        <i class="bi bi-x-circle-fill flex-shrink-0"></i>
+        <span id="alertmsg"></span>
+      </div>
+    </div>
+
+    <div id="loginForm">
+
+      <!-- RUOLO SELECTOR -->
+      <div class="mb-3">
+        <label class="form-label small fw-semibold text-muted mb-2">Accedi come</label>
+        <div class="d-flex gap-2 flex-wrap" id="roleSelector">
+          <span class="role-badge active" data-role="admin" onclick="selectRole('admin',this)">
+            <i class="bi bi-shield-check"></i>Amministratore
+          </span>
+          <span class="role-badge" data-role="capo" onclick="selectRole('capo',this)">
+            <i class="bi bi-person-badge"></i>Capo cantiere
+          </span>
+          <span class="role-badge" data-role="operaio" onclick="selectRole('operaio',this)">
+            <i class="bi bi-person-gear"></i>Operaio
+          </span>
+        </div>
+      </div>
+
+      <!-- USERNAME -->
+      <div class="mb-3">
+        <label for="username" class="form-label small fw-semibold">Nome utente</label>
+        <div class="input-group">
+          <span class="input-group-text input-icon"><i class="bi bi-person"></i></span>
+          <input type="text" class="form-control loginrequired loginunm" id="username"
+                 placeholder="es. admin.bianchi" autocomplete="username" required>
+        </div>
+      </div>
+
+      <!-- PASSWORD -->
+      <div class="mb-3">
+        <div class="d-flex justify-content-between align-items-center mb-1">
+          <label for="password" class="form-label small fw-semibold mb-0">Password</label>
+          <a href="#" class="text-muted small text-decoration-none" onclick="return false;">Password dimenticata?</a>
+        </div>
+        <div class="input-group">
+          <span class="input-group-text input-icon"><i class="bi bi-lock"></i></span>
+          <input type="password" class="form-control loginrequired loginpwd" id="password"
+                 placeholder="••••••••" autocomplete="current-password" required>
+          <button class="btn btn-outline-secondary" type="button" id="togglePwd" tabindex="-1">
+            <i class="bi bi-eye" id="togglePwdIcon"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- RICORDAMI -->
+      <div class="mb-4 d-flex justify-content-between align-items-center">
+        <div class="form-check mb-0">
+          <input class="form-check-input" type="checkbox" id="remember">
+          <label class="form-check-label small text-muted" for="remember">Ricordami</label>
+        </div>
+      </div>
+
+      <!-- SUBMIT -->
+      <button type="button" class="btn btn-login w-100 rounded-3 btnLogin" id="btnlogin" disabled>
+        <i class="bi bi-box-arrow-in-right me-2"></i>Accedi
+      </button>
+
+    </div>
+
+    <!-- DEMO ACCOUNTS -->
+    <div class="divider">Account demo</div>
+    <table class="table table-sm table-borderless demo-accounts mb-0">
+      <tbody>
+        <tr onclick="fillDemo('admin.bianchi','admin123','admin')">
+          <td><span class="badge bg-dark text-warning" style="font-size:.65rem;">Admin</span></td>
+          <td class="text-muted">admin.bianchi</td>
+          <td class="text-muted">admin123</td>
+          <td><i class="bi bi-arrow-up-right text-muted" style="font-size:.7rem;"></i></td>
+        </tr>
+        <tr onclick="fillDemo('g.russo','capo456','capo')">
+          <td><span class="badge bg-secondary" style="font-size:.65rem;">Capo</span></td>
+          <td class="text-muted">g.russo</td>
+          <td class="text-muted">capo456</td>
+          <td><i class="bi bi-arrow-up-right text-muted" style="font-size:.7rem;"></i></td>
+        </tr>
+        <tr onclick="fillDemo('m.ferrari','op789','operaio')">
+          <td><span class="badge bg-secondary" style="font-size:.65rem;">Operaio</span></td>
+          <td class="text-muted">m.ferrari</td>
+          <td class="text-muted">op789</td>
+          <td><i class="bi bi-arrow-up-right text-muted" style="font-size:.7rem;"></i></td>
+        </tr>
+      </tbody>
+    </table>
+
+  </div><!-- /login-body -->
+</div><!-- /login-card -->
+
+<!-- spinner overlay (used by main.js Perform) -->
+<div id="myspinner" class="d-none position-fixed top-0 start-0 w-100 h-100 align-items-center justify-content-center" style="background:rgba(0,0,0,.4);z-index:9999;">
+  <div class="spinner-border text-light" role="status"><span class="visually-hidden">Caricamento…</span></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="./js/main.js"></script>
+<script>
+// ── ROLE SELECTOR (UI only) ───────────────────────────────────────────────────
+function selectRole(role, el) {
+  document.querySelectorAll('.role-badge').forEach(function(b) { b.classList.remove('active'); });
+  el.classList.add('active');
+}
+
+// ── FILL DEMO ─────────────────────────────────────────────────────────────────
+function fillDemo(user, pwd, role) {
+  document.getElementById('username').value = user;
+  document.getElementById('password').value = pwd;
+  var badge = document.querySelector('.role-badge[data-role="' + role + '"]');
+  if (badge) { selectRole(role, badge); }
+  // trigger validation so button enables
+  document.getElementById('username').dispatchEvent(new Event('input'));
+  document.getElementById('password').dispatchEvent(new Event('input'));
+}
+
+// ── TOGGLE PASSWORD VISIBILITY ────────────────────────────────────────────────
+document.getElementById('togglePwd').addEventListener('click', function() {
+  var inp  = document.getElementById('password');
+  var icon = document.getElementById('togglePwdIcon');
+  if (inp.type === 'password') {
+    inp.type = 'text'; icon.className = 'bi bi-eye-slash';
+  } else {
+    inp.type = 'password'; icon.className = 'bi bi-eye';
+  }
+});
+</script>
+</body>
+</html>

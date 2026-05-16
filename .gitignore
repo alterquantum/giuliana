@@ -1,0 +1,11 @@
+# Credenziali DB — non committare mai
+config/Database.php
+
+# IDE NetBeans
+nbproject/
+
+# Claude Code settings locali
+.claude/settings.local.json
+
+# PHP temp / log
+*.log
