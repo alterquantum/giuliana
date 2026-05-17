@@ -2,10 +2,12 @@
 namespace controllers;
 
 require_once __DIR__ . '/../parsers/DeiPdfParser.php';
+require_once __DIR__ . '/../parsers/CampaniaPrezziarioParser.php';
 require_once __DIR__ . '/../models/PrezziarioDeiImportModel.php';
 require_once __DIR__ . '/../services/Response.php';
 
 use parsers\DeiPdfParser;
+use parsers\CampaniaPrezziarioParser;
 use models\PrezziarioDeiImportModel;
 use services\Response;
 
@@ -25,7 +27,9 @@ class PrezziarioDeiImportController {
 
             $sostituisci = ($this->data['sostituisci'] ?? '0') === '1';
 
-            $parser = new DeiPdfParser();
+            $parser = preg_match('/\bCAM\d+_[A-Z]/i', $testo)
+                ? new CampaniaPrezziarioParser()
+                : new DeiPdfParser();
             $voci   = $parser->parse($testo);
 
             if (empty($voci)) {
