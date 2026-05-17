@@ -105,10 +105,6 @@
       content: ''; flex: 1; height: 1px; background: #dee2e6;
     }
 
-    .demo-accounts { font-size: .75rem; }
-    .demo-accounts td { padding: .25rem .4rem; }
-    .demo-accounts tr:hover td { background: #f8f9fa; cursor: pointer; }
-
     /* shake animation on error */
     @keyframes shake {
       0%,100%{ transform:translateX(0) }
@@ -206,31 +202,6 @@
 
     </div>
 
-    <!-- DEMO ACCOUNTS -->
-    <div class="divider">Account demo</div>
-    <table class="table table-sm table-borderless demo-accounts mb-0">
-      <tbody>
-        <tr onclick="fillDemo('admin.bianchi','admin123','admin')">
-          <td><span class="badge bg-dark text-warning" style="font-size:.65rem;">Admin</span></td>
-          <td class="text-muted">admin.bianchi</td>
-          <td class="text-muted">admin123</td>
-          <td><i class="bi bi-arrow-up-right text-muted" style="font-size:.7rem;"></i></td>
-        </tr>
-        <tr onclick="fillDemo('g.russo','capo456','capo')">
-          <td><span class="badge bg-secondary" style="font-size:.65rem;">Capo</span></td>
-          <td class="text-muted">g.russo</td>
-          <td class="text-muted">capo456</td>
-          <td><i class="bi bi-arrow-up-right text-muted" style="font-size:.7rem;"></i></td>
-        </tr>
-        <tr onclick="fillDemo('m.ferrari','op789','operaio')">
-          <td><span class="badge bg-secondary" style="font-size:.65rem;">Operaio</span></td>
-          <td class="text-muted">m.ferrari</td>
-          <td class="text-muted">op789</td>
-          <td><i class="bi bi-arrow-up-right text-muted" style="font-size:.7rem;"></i></td>
-        </tr>
-      </tbody>
-    </table>
-
   </div><!-- /login-body -->
 </div><!-- /login-card -->
 
@@ -246,17 +217,6 @@
 function selectRole(role, el) {
   document.querySelectorAll('.role-badge').forEach(function(b) { b.classList.remove('active'); });
   el.classList.add('active');
-}
-
-// ── FILL DEMO ─────────────────────────────────────────────────────────────────
-function fillDemo(user, pwd, role) {
-  document.getElementById('username').value = user;
-  document.getElementById('password').value = pwd;
-  var badge = document.querySelector('.role-badge[data-role="' + role + '"]');
-  if (badge) { selectRole(role, badge); }
-  // trigger validation so button enables
-  document.getElementById('username').dispatchEvent(new Event('input'));
-  document.getElementById('password').dispatchEvent(new Event('input'));
 }
 
 // ── TOGGLE PASSWORD VISIBILITY ────────────────────────────────────────────────
