@@ -1194,7 +1194,8 @@ document.addEventListener('click', function(event)
   var elimBtn = event.target.closest('.btnEliminaComputo');
   if (elimBtn)
   {
-    if (!confirm('Eliminare questo computo e tutte le sue voci?')) return;
+    var row = elimBtn.closest('tr');
+    if (row) { row.remove(); }
     var d = new FormData();
     d.append('action', 'computo_elimina');
     d.append('id', elimBtn.dataset.id);
