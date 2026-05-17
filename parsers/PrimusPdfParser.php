@@ -4,32 +4,32 @@ namespace parsers;
 /**
  * Parsa il testo estratto da un PDF PriMus (computo metrico).
  *
- * Âncora di parsing: riga "SOMMANO UM qty prezzo totale".
- * Il codice DEI può essere spezzato su due righe:
- *   CAM26_R02  (prima riga)
- *   .060.010.A (riga successiva)
- * Separatore migliaia nei numeri: ´ (U+00B4), separatore decimale: ,
+ * Âncora: riga "SOMMANO UM qty prezzo totale".
+ * Il testo arriva da PDF.js con un \n per pagina; all'interno della pagina
+ * le voci sono in sequenza senza newline garantiti.
+ *
+ * Codice DEI può essere spezzato: "CAM26_R02 ... .060.010.A"
+ * Separatore migliaia: ´ (U+00B4) o ' — gestito in parseNum.
  */
 class PrimusPdfParser {
 
-    // Righe da ignorare nella costruzione della descrizione
-    private const SKIP_PATTERNS = [
-        '/^(R\s*I\s*P\s*O\s*R\s*T\s*O|RIPORTO)/i',
-        '/^(LAVORI\s+(A\s+MISURA|IN\s+ECONOMIA|A\s+CORPO))/i',
-        '/^(Num\.?\s*Ord|TARIFFA|DESIGNAZIONE|Quantit|IMPORTI|par\.ug\.|D\s+I\s+M)/i',
-        '/^CAM\d+_/i',
-        '/^\.[0-9]{3}\.[0-9]{3}\.[A-Z]/i',
-        '/^[A-Z]{2,4}\)/i',
-        '/^\s*\d+\s*$/',
+    private const HEADER_RE = [
+        '/\b(R\s*I\s*P\s*O\s*R\s*T\s*O|RIPORTO)\b/i',
+        '/\bLAVORI\s+(A\s+MISURA|IN\s+ECONOMIA|A\s+CORPO)\b/i',
+        '/\b(Num\.?\s*Ord\.?|TARIFFA|DESIGNAZIONE\s+DEI\s+LAVORI)\b/i',
+        '/\b(par\.ug\.|H\/peso|larg\.|lung\.)\b/i',
+        '/\bA\s+R\s*I\s*P\s*O\s*R\s*T\s*A\s*R\s*E\b/i',
+        '/\bCOMMITTENTE\b.{0,80}/i',
+        '/\bpag\.\s*\d+\b/i',
+        '/\bD\s+I\s+M\s+E\s+N\s+S\s+I\s+O\s+N\s+I\b/i',
+        '/\bI\s+M\s+P\s+O\s+R\s+T\s+I\b/i',
     ];
 
+    private const UM_PAT = 'a\s+corpo|mq|mc|ml|m[²³23]?|kg|t\b|ton\b|h\b|l\b|cad\.?|corpo|corp\.|n\.|pz\.?|kw\b|kwh\b';
+
     public function parse(string $testo): array {
-        $testo = preg_replace('/ +/', ' ', $testo);
-
-        $umPat = 'a\s+corpo|mq|mc|ml|m[²³23]?|kg|t\b|ton\b|h\b|l\b|cad\.?|corpo|corp\.|n\.|pz\.?|kw\b|kwh\b';
-        $nPat  = '[0-9][0-9\xB4\x27´\s,\.]*';
-
-        $re = '/\bSOMMAN[OI]\s+(' . $umPat . ')\s+(' . $nPat . ')\s+(' . $nPat . ')\s+(' . $nPat . ')/iu';
+        $testo = preg_replace('/ {2,}/', ' ', $testo);
+        $re    = '/\bSOMMAN[OI]\s+(' . self::UM_PAT . ')\s+(\S+)\s+(\S+)\s+(\S+)/iu';
 
         preg_match_all($re, $testo, $sm, PREG_OFFSET_CAPTURE);
         if (empty($sm[0])) return [];
@@ -48,7 +48,7 @@ class PrimusPdfParser {
             $prezzo  = $this->parseNum($sm[3][$i][0]);
             $importo = $this->parseNum($sm[4][$i][0]);
 
-            if ($importo <= 0 && $qty <= 0) continue;
+            if ($qty <= 0 && $importo <= 0) continue;
 
             $voci[] = [
                 'numero_voce'     => $this->estraiNumero($blocco),
@@ -65,57 +65,59 @@ class PrimusPdfParser {
     }
 
     private function estraiCodice(string $blocco): string {
-        // Codice intero sulla stessa riga: CAM26_R02.060.010.A
+        // Codice intero su un token: CAM26_R02.060.010.A
         if (preg_match('/\b(CAM\d+_[A-Z][A-Z0-9]*(?:\.[A-Z0-9]+)+\.[A-Z])\b/i', $blocco, $m)) {
             return strtoupper($m[1]);
         }
-        // Codice spezzato su due righe: "CAM26_R02\n.060.010.A"
-        if (preg_match('/\b(CAM\d+_[A-Z][A-Z0-9]*)\s*\n\s*((?:\.[A-Z0-9]+)+)/i', $blocco, $m)) {
-            return strtoupper($m[1] . $m[2]);
+        // Codice spezzato: prefisso "CAM26_R02" + suffisso ".060.010.A" separati da testo
+        $hasPrefix = preg_match('/\b(CAM\d+_[A-Z][A-Z0-9]*)/i', $blocco, $mp);
+        $hasSuffix = preg_match('/(\.[0-9]{2,3}\.[0-9]{2,3}\.[A-Z])\b/i', $blocco, $ms);
+        if ($hasPrefix && $hasSuffix) {
+            return strtoupper($mp[1] . $ms[1]);
         }
-        // Codici non-CAM (NP.03, ecc.)
-        if (preg_match('/\b([A-Z]{1,4}\.\d{2,}(?:\.\d+)*)\b/', $blocco, $m)) {
+        // Codici non-CAM (NP.01, NP.02, ecc.)
+        if (preg_match('/\b([A-Z]{2,4}\.\d{2,}(?:\.\d+)*)\b/', $blocco, $m)) {
             return strtoupper($m[1]);
         }
         return '';
     }
 
     private function estraiNumero(string $blocco): string {
-        foreach (array_map('trim', explode("\n", $blocco)) as $linea) {
-            if (preg_match('/^(\d+)\s+[^\d]/', $linea, $m)) return $m[1];
-            if (preg_match('/^\d+$/', $linea, $m)) return $m[0];
+        // Numero d'ordine: 1-3 cifre prima di una parola che inizia con maiuscola
+        if (preg_match('/\b(\d{1,3})\s+[A-ZÀÈÉÌÒÙ]/u', $blocco, $m)) {
+            return $m[1];
         }
         return '';
     }
 
     private function estraiDescrizione(string $blocco): string {
-        $parti = [];
-        foreach (array_map('trim', explode("\n", $blocco)) as $linea) {
-            if ($linea === '') continue;
-            $salta = false;
-            foreach (self::SKIP_PATTERNS as $pat) {
-                if (preg_match($pat, $linea)) { $salta = true; break; }
-            }
-            if ($salta) continue;
-            // Rimuove numero d'ordine iniziale
-            $linea = preg_replace('/^\d+\s+/', '', $linea);
-            // Rimuove riferimento codice CAM in riga mista
-            $linea = preg_replace('/\bCAM\d+_[A-Z][A-Z0-9]*\s*/i', '', $linea);
-            // Rimuove suffisso codice tipo ".060.010.A ("
-            $linea = preg_replace('/^\.[0-9]+\.[0-9]+\.[A-Z]\s*\(?\s*/i', '', $linea);
-            // Rimuove cifra isolata in coda (quantità della riga dimesionale)
-            $linea = preg_replace('/\s+[\d\xB4´\',\.]+\s*$/', '', $linea);
-            $linea = trim($linea);
-            if ($linea !== '') $parti[] = $linea;
+        $s = $blocco;
+        // Rimuove header di pagina
+        foreach (self::HEADER_RE as $re) {
+            $s = preg_replace($re, ' ', $s);
         }
-        return trim(substr(preg_replace('/\s+/', ' ', implode(' ', $parti)), 0, 400));
+        // Rimuove parti del codice
+        $s = preg_replace('/\bCAM\d+_[A-Z][A-Z0-9]*/i', '', $s);
+        $s = preg_replace('/\.[0-9]{2,3}\.[0-9]{2,3}\.[A-Z]\s*\(?\s*/i', '', $s);
+        $s = preg_replace('/\b[A-Z]{2,4}\)\s*/i', '', $s);
+        // Rimuove numero d'ordine iniziale
+        $s = preg_replace('/^\s*\d{1,3}\s+/', '', $s);
+        // Rimuove cifre isolate in coda (righe dimensionali)
+        $s = preg_replace('/[\s\d,\.´\'*()=+\-]+\s*$/', '', $s);
+        return trim(substr(preg_replace('/\s+/', ' ', $s), 0, 400));
     }
 
     private function parseNum(string $s): float {
-        // Rimuove separatori migliaia: ´ (U+00B4), ' , spazi
-        $s = preg_replace('/[\xB4´\'\s]/u', '', $s);
-        // , come separatore decimale → .
-        $s = str_replace(',', '.', $s);
-        return (float) trim($s);
+        // Rimuove tutto tranne cifre, virgola e punto
+        $s = preg_replace('/[^\d,.]/', '', $s);
+        if ($s === '') return 0.0;
+        // Formato italiano: virgola = decimale, punto = migliaia
+        if (strpos($s, ',') !== false && strpos($s, '.') !== false) {
+            $s = str_replace('.', '', $s);
+            $s = str_replace(',', '.', $s);
+        } elseif (strpos($s, ',') !== false) {
+            $s = str_replace(',', '.', $s);
+        }
+        return (float) $s;
     }
 }

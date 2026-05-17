@@ -166,6 +166,14 @@ async function Perform(data)
           var evmMsg = document.querySelector('.msgevm');
           if (evmMsg) { evmMsg.classList.remove('d-none'); }
         break;
+        case 'computo_import':
+          if (spin) { spin.classList.add('d-none'); }
+          CloseModalAndRefresh('modalImportaComputo');
+        break;
+        case 'dei_import':
+          if (spin) { spin.classList.add('d-none'); }
+          CloseModalAndRefresh('modalImportaDei');
+        break;
         default:
           if (spin) { spin.classList.add('d-none'); }
         break;
