@@ -14,6 +14,9 @@ require_once __DIR__ . '/../controllers/MaterialeListController.php';
 require_once __DIR__ . '/../controllers/DocumentoListController.php';
 require_once __DIR__ . '/../controllers/GanttController.php';
 require_once __DIR__ . '/../controllers/ReportController.php';
+require_once __DIR__ . '/../controllers/PrezziarioDeiController.php';
+require_once __DIR__ . '/../controllers/ComputiListController.php';
+require_once __DIR__ . '/../controllers/AnalisiComputiController.php';
 
 use services\CurrentUser;
 use services\Response;
@@ -28,6 +31,9 @@ use controllers\MaterialeListController;
 use controllers\DocumentoListController;
 use controllers\GanttController;
 use controllers\ReportController;
+use controllers\PrezziarioDeiController;
+use controllers\ComputiListController;
+use controllers\AnalisiComputiController;
 
 class Router {
     private Response $response;
@@ -84,6 +90,17 @@ class Router {
                     break;
                 case 'report':
                     $this->response->setDom((new ReportController())->render());
+                    break;
+                case 'prezziario_dei':
+                    $this->response->setDom((new PrezziarioDeiController())->render());
+                    break;
+                case 'computi':
+                    $idCant = $this->data['id_cantiere'] ?? '';
+                    $this->response->setDom((new ComputiListController($idCant))->render());
+                    break;
+                case 'analisi_computo':
+                    $idComp = $this->data['id_computo'] ?? '';
+                    $this->response->setDom((new AnalisiComputiController($idComp))->render());
                     break;
                 default:
                     $this->response->setDom((new DashboardController())->render());

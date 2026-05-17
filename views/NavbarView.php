@@ -40,9 +40,16 @@ class NavbarView {
             [
                 'section' => 'Gestione',
                 'items'   => [
-                    ['key' => 'documenti',  'icon' => 'bi-file-earmark-text',    'label' => 'Documenti'],
-                    ['key' => 'report',     'icon' => 'bi-bar-chart-line',       'label' => 'Report'],
-                    ['key' => 'gantt',      'icon' => 'bi-calendar3-range',      'label' => 'Gantt'],
+                    ['key' => 'documenti',      'icon' => 'bi-file-earmark-text',    'label' => 'Documenti'],
+                    ['key' => 'report',          'icon' => 'bi-bar-chart-line',       'label' => 'Report'],
+                    ['key' => 'gantt',           'icon' => 'bi-calendar3-range',      'label' => 'Gantt'],
+                ],
+            ],
+            [
+                'section' => 'Computo Metrico',
+                'items'   => [
+                    ['key' => 'prezziario_dei',  'icon' => 'bi-book',                 'label' => 'Prezziario DEI'],
+                    ['key' => 'computi',         'icon' => 'bi-calculator',           'label' => 'Computi'],
                 ],
             ],
         ];

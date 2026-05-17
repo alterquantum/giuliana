@@ -1132,6 +1132,58 @@ document.addEventListener('click', function(event)
     return;
   }
   if (!event.target.closest('.customselect')) { CloseAllSelectDropdowns(); }
+  // ── Prezziario DEI ──
+  if (event.target.classList.contains('btnImportaDei'))
+  {
+    var m = new bootstrap.Modal(document.getElementById('modalImportaDei'));
+    m.show();
+    return;
+  }
+  if (event.target.classList.contains('btnAvviaImportDei'))
+  {
+    ImportaDei(); return;
+  }
+  // ── Computi ──
+  if (event.target.classList.contains('btnImportaComputo'))
+  {
+    var m = new bootstrap.Modal(document.getElementById('modalImportaComputo'));
+    m.show();
+    return;
+  }
+  if (event.target.classList.contains('btnAvviaImportComputo'))
+  {
+    ImportaComputo(); return;
+  }
+  var analisiBtn = event.target.closest('.btnAnalisiComputo');
+  if (analisiBtn)
+  {
+    var idComputo = analisiBtn.dataset.id;
+    SetAppIdItem('id_computo_analisi', idComputo);
+    var d = new FormData();
+    d.append('page', 'analisi_computo');
+    d.append('id_computo', idComputo);
+    Routing(d);
+    return;
+  }
+  var elimBtn = event.target.closest('.btnEliminaComputo');
+  if (elimBtn)
+  {
+    if (!confirm('Eliminare questo computo e tutte le sue voci?')) return;
+    var d = new FormData();
+    d.append('action', 'computo_elimina');
+    d.append('id', elimBtn.dataset.id);
+    Perform(d);
+    return;
+  }
+  if (event.target.classList.contains('btnTornaComputi'))
+  {
+    var d = new FormData();
+    d.append('page', 'computi');
+    var saved = GetAppIdItem('id_cantiere_computi');
+    if (saved) d.append('id_cantiere', saved);
+    Routing(d);
+    return;
+  }
   // ── Navigation via data-href ──
   if (event.target.closest('.ishref'))
   {
@@ -1172,4 +1224,141 @@ document.addEventListener('change', function(event)
   if (event.target.classList.contains('materialereq')) { CheckMaterialeForm(); }
   if (event.target.classList.contains('documentoreq')) { CheckDocumentoForm(); }
   if (event.target.classList.contains('attivitareq'))  { CheckAttivitaForm(); }
+  // DEI file input → abilita bottone
+  if (event.target.classList.contains('deiFile'))
+  {
+    document.querySelector('.btnAvviaImportDei').disabled = !event.target.files.length;
+  }
+  // Computo file input → abilita bottone se anche cantiere selezionato
+  if (event.target.classList.contains('computoFile')) { CheckComputoImportForm(); }
+  if (event.target.classList.contains('computoCantiere')) { CheckComputoImportForm(); }
+  // Ricerca rapida tabella DEI
+  if (event.target.classList.contains('deiSearch'))
+  {
+    var q = event.target.value.toLowerCase();
+    document.querySelectorAll('#tableDei tbody tr').forEach(function(tr)
+    {
+      tr.style.display = tr.textContent.toLowerCase().includes(q) ? '' : 'none';
+    });
+  }
+  // Cambio cantiere nella pagina computi
+  if (event.target.classList.contains('selCantiereComputi'))
+  {
+    var idCant = event.target.value;
+    var d = new FormData();
+    d.append('page', 'computi');
+    d.append('id_cantiere', idCant);
+    if (idCant) { SetAppIdItem('id_cantiere_computi', idCant); }
+    Routing(d);
+  }
 });
+
+// ══════════════════════════════════════════════════════════════
+// COMPUTI METRICI — PDF.js extraction + import
+// ══════════════════════════════════════════════════════════════
+
+// Configura worker PDF.js (CDN)
+if (typeof pdfjsLib !== 'undefined') {
+  pdfjsLib.GlobalWorkerOptions.workerSrc =
+    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
+
+async function ExtractPdfText(file, onProgress) {
+  if (typeof pdfjsLib === 'undefined') {
+    throw new Error('PDF.js non disponibile. Verifica la connessione internet.');
+  }
+  var arrayBuffer = await file.arrayBuffer();
+  var pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  var testo = '';
+  for (var i = 1; i <= pdf.numPages; i++) {
+    var page    = await pdf.getPage(i);
+    var content = await page.getTextContent();
+    testo += content.items.map(function(item) { return item.str; }).join(' ') + '\n';
+    if (onProgress) { onProgress(i, pdf.numPages); }
+  }
+  return testo;
+}
+
+function CheckComputoImportForm() {
+  var btn  = document.querySelector('.btnAvviaImportComputo');
+  var file = document.querySelector('.computoFile');
+  var cant = document.querySelector('.computoCantiere');
+  if (btn && file && cant) {
+    btn.disabled = !(file.files.length && cant.value);
+  }
+}
+
+async function ImportaDei() {
+  var fileInput  = document.querySelector('.deiFile');
+  var chkSost    = document.querySelector('.deiSostituisci');
+  var progressEl = document.querySelector('.deiProgress');
+  var labelEl    = document.querySelector('.deiProgressLabel');
+  var barEl      = document.querySelector('.deiProgressBar');
+  var btn        = document.querySelector('.btnAvviaImportDei');
+
+  if (!fileInput || !fileInput.files[0]) return;
+  btn.disabled = true;
+  progressEl.classList.remove('d-none');
+
+  try {
+    labelEl.textContent = 'Estrazione testo in corso…';
+    var testo = await ExtractPdfText(fileInput.files[0], function(pg, tot) {
+      var pct = Math.round((pg / tot) * 80);
+      barEl.style.width = pct + '%';
+      labelEl.textContent = 'Pagina ' + pg + ' di ' + tot + '…';
+    });
+
+    barEl.style.width = '90%';
+    labelEl.textContent = 'Invio al server…';
+
+    var data = new FormData();
+    data.append('action',      'dei_import');
+    data.append('testo_pdf',   testo);
+    data.append('sostituisci', chkSost && chkSost.checked ? '1' : '0');
+    await Perform(data);
+
+    barEl.style.width = '100%';
+  } catch (e) {
+    alert('Errore: ' + e.message);
+    btn.disabled = false;
+    progressEl.classList.add('d-none');
+  }
+}
+
+async function ImportaComputo() {
+  var fileInput  = document.querySelector('.computoFile');
+  var cantSel    = document.querySelector('.computoCantiere');
+  var progressEl = document.querySelector('.computoProgress');
+  var labelEl    = document.querySelector('.computoProgressLabel');
+  var barEl      = document.querySelector('.computoProgressBar');
+  var btn        = document.querySelector('.btnAvviaImportComputo');
+
+  if (!fileInput || !fileInput.files[0] || !cantSel || !cantSel.value) return;
+  btn.disabled = true;
+  progressEl.classList.remove('d-none');
+
+  try {
+    labelEl.textContent = 'Estrazione testo in corso…';
+    var testo = await ExtractPdfText(fileInput.files[0], function(pg, tot) {
+      var pct = Math.round((pg / tot) * 80);
+      barEl.style.width = pct + '%';
+      labelEl.textContent = 'Pagina ' + pg + ' di ' + tot + '…';
+    });
+
+    barEl.style.width = '90%';
+    labelEl.textContent = 'Analisi e salvataggio…';
+
+    var data = new FormData();
+    data.append('action',      'computo_import');
+    data.append('id_cantiere', cantSel.value);
+    data.append('nome_file',   fileInput.files[0].name);
+    data.append('testo_pdf',   testo);
+    await Perform(data);
+
+    barEl.style.width = '100%';
+  } catch (e) {
+    alert('Errore: ' + e.message);
+    btn.disabled = false;
+    progressEl.classList.add('d-none');
+  }
+}

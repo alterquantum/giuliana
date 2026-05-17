@@ -16,6 +16,8 @@ require_once __DIR__ . '/../controllers/MaterialeUpsertController.php';
 require_once __DIR__ . '/../controllers/DocumentoUpsertController.php';
 require_once __DIR__ . '/../controllers/GanttUpsertController.php';
 require_once __DIR__ . '/../controllers/EvmSnapshotController.php';
+require_once __DIR__ . '/../controllers/PrezziarioDeiImportController.php';
+require_once __DIR__ . '/../controllers/ComputiImportController.php';
 
 use services\CurrentUser;
 use services\Response;
@@ -32,6 +34,8 @@ use controllers\MaterialeUpsertController;
 use controllers\DocumentoUpsertController;
 use controllers\GanttUpsertController;
 use controllers\EvmSnapshotController;
+use controllers\PrezziarioDeiImportController;
+use controllers\ComputiImportController;
 
 class Performer {
     private Response $response;
@@ -180,6 +184,26 @@ class Performer {
 
             case 'evm_snapshot':
                 $result = (new EvmSnapshotController($this->data))->snapshot();
+                $this->response->setRes($result['res']);
+                $this->response->setMsg($result['msg']);
+                break;
+
+            case 'dei_import':
+                $result = (new PrezziarioDeiImportController($this->data))->import();
+                $this->response->setRes($result['res']);
+                $this->response->setMsg($result['msg']);
+                $this->response->setDbRes($result['dbres']);
+                break;
+
+            case 'computo_import':
+                $result = (new ComputiImportController($this->data))->import();
+                $this->response->setRes($result['res']);
+                $this->response->setMsg($result['msg']);
+                $this->response->setDbRes($result['dbres']);
+                break;
+
+            case 'computo_elimina':
+                $result = (new ComputiImportController($this->data))->elimina();
                 $this->response->setRes($result['res']);
                 $this->response->setMsg($result['msg']);
                 break;
