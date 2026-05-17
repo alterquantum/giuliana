@@ -93,6 +93,7 @@ class ComputiListView {
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
+        <div class="alert alert-danger d-none modalalert" role="alert"><span class="modalalertmsg"></span></div>
         <div class="alert alert-info small">
           <i class="bi bi-info-circle me-1"></i>
           Il testo viene estratto <strong>nel browser</strong> — il file PDF non viene caricato sul server.

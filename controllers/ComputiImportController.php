@@ -36,24 +36,8 @@ class ComputiImportController {
                 );
             }
 
-            $model        = new ComputiImportModel();
-            $importoTot   = 0.0;
-
-            // Arricchimento con dati DEI (rendimento, n_operai)
-            foreach ($voci as &$v) {
-                $importoTot += (float)($v['importo'] ?? 0);
-                if (!empty($v['codice_dei'])) {
-                    $dei = $model->getDeiRendimento($v['codice_dei']);
-                    if (!empty($dei)) {
-                        $rend = (float)($dei['rendimento_giornaliero'] ?? 0);
-                        $qt   = (float)($v['quantita'] ?? 0);
-                        $v['durata_giorni'] = $rend > 0 ? round($qt / $rend, 2) : null;
-                        $squadra = json_decode($dei['squadra_tipo'] ?? '{}', true);
-                        $v['n_operai'] = array_sum((array)$squadra) ?: null;
-                    }
-                }
-            }
-            unset($v);
+            $model      = new ComputiImportModel();
+            $importoTot = array_sum(array_column($voci, 'importo'));
 
             $result = $model->importa($idCantiere, $nomeFile, $importoTot, $voci);
 
