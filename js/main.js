@@ -168,7 +168,12 @@ async function Perform(data)
         break;
         case 'computo_import':
           if (spin) { spin.classList.add('d-none'); }
-          CloseModalAndRefresh('modalImportaComputo');
+          RefreshComputi('modalImportaComputo');
+        break;
+        case 'computo_elimina':
+          if (spin) { spin.classList.add('d-none'); }
+          var elimRow = document.querySelector('tr[data-id="' + data.get('id') + '"]');
+          if (elimRow) { elimRow.remove(); }
         break;
         case 'dei_import':
           if (spin) { spin.classList.add('d-none'); }
@@ -283,12 +288,25 @@ function CloseModalAndRefresh(modalId)
   var modalEl = document.getElementById(modalId);
   if (modalEl)
   {
-    var modal = bootstrap.Modal.getInstance(modalEl);
-    if (modal) { modal.hide(); }
+    var modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+    modal.hide();
   }
   var data = new FormData();
   data.append('page', PageAddress());
   Routing(data);
+};
+function RefreshComputi(modalId)
+{
+  if (modalId)
+  {
+    var modalEl = document.getElementById(modalId);
+    if (modalEl) { bootstrap.Modal.getOrCreateInstance(modalEl).hide(); }
+  }
+  var d = new FormData();
+  d.append('page', 'computi');
+  var savedCant = GetAppIdItem('id_cantiere_computi');
+  if (savedCant) { d.append('id_cantiere', savedCant); }
+  Routing(d);
 };
 function OpenModalNew(modalId, titleText, resetFn)
 {
