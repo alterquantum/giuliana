@@ -23,7 +23,7 @@ class AuthLoginController {
 
         if (empty($username) || empty($pwd)) {
             $this->response->setRes('no');
-            $this->response->setMsg('Inserire username e password.');
+            $this->response->setMsg('Inserire email e password.');
             return $this->response->getRes();
         }
 

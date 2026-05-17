@@ -72,29 +72,6 @@
     .btn-login:hover { background: #343a40; color: #fff; }
     .btn-login:active { background: #1a1f25; color: #fff; }
 
-    .role-badge {
-      display: inline-flex; align-items: center; gap: .3rem;
-      font-size: .72rem; padding: .3rem .6rem;
-      border-radius: 99px; cursor: pointer;
-      border: 1.5px solid transparent;
-      transition: all .15s;
-    }
-    .role-badge.active {
-      border-color: #212529;
-      background: #212529;
-      color: #ffc107;
-    }
-    .role-badge:not(.active) {
-      border-color: #dee2e6;
-      background: #f8f9fa;
-      color: #6c757d;
-    }
-    .role-badge:not(.active):hover {
-      border-color: #adb5bd;
-      background: #e9ecef;
-      color: #343a40;
-    }
-
     .input-icon { color: #adb5bd; }
 
     .divider {
@@ -145,29 +122,13 @@
 
     <div id="loginForm">
 
-      <!-- RUOLO SELECTOR -->
+      <!-- EMAIL -->
       <div class="mb-3">
-        <label class="form-label small fw-semibold text-muted mb-2">Accedi come</label>
-        <div class="d-flex gap-2 flex-wrap" id="roleSelector">
-          <span class="role-badge active" data-role="admin" onclick="selectRole('admin',this)">
-            <i class="bi bi-shield-check"></i>Amministratore
-          </span>
-          <span class="role-badge" data-role="capo" onclick="selectRole('capo',this)">
-            <i class="bi bi-person-badge"></i>Capo cantiere
-          </span>
-          <span class="role-badge" data-role="operaio" onclick="selectRole('operaio',this)">
-            <i class="bi bi-person-gear"></i>Operaio
-          </span>
-        </div>
-      </div>
-
-      <!-- USERNAME -->
-      <div class="mb-3">
-        <label for="username" class="form-label small fw-semibold">Nome utente</label>
+        <label for="username" class="form-label small fw-semibold">Email</label>
         <div class="input-group">
-          <span class="input-group-text input-icon"><i class="bi bi-person"></i></span>
-          <input type="text" class="form-control loginrequired loginunm" id="username"
-                 placeholder="es. admin.bianchi" autocomplete="username" required>
+          <span class="input-group-text input-icon"><i class="bi bi-envelope"></i></span>
+          <input type="email" class="form-control loginrequired loginunm" id="username"
+                 placeholder="es. nome@email.it" autocomplete="email" required>
         </div>
       </div>
 
@@ -213,12 +174,6 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script src="./js/main.js"></script>
 <script>
-// ── ROLE SELECTOR (UI only) ───────────────────────────────────────────────────
-function selectRole(role, el) {
-  document.querySelectorAll('.role-badge').forEach(function(b) { b.classList.remove('active'); });
-  el.classList.add('active');
-}
-
 // ── TOGGLE PASSWORD VISIBILITY ────────────────────────────────────────────────
 document.getElementById('togglePwd').addEventListener('click', function() {
   var inp  = document.getElementById('password');
