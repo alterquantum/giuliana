@@ -159,7 +159,7 @@ async function Perform(data)
         break;
         case 'attivita_gantt_upsert':
           if (spin) { spin.classList.add('d-none'); }
-          CloseModalAndRefresh('modalAttivita');
+          RefreshGantt('modalAttivita');
         break;
         case 'evm_snapshot':
           if (spin) { spin.classList.add('d-none'); }
@@ -294,6 +294,19 @@ function CloseModalAndRefresh(modalId)
   var data = new FormData();
   data.append('page', PageAddress());
   Routing(data);
+};
+function RefreshGantt(modalId)
+{
+  if (modalId)
+  {
+    var modalEl = document.getElementById(modalId);
+    if (modalEl) { bootstrap.Modal.getOrCreateInstance(modalEl).hide(); }
+  }
+  var d = new FormData();
+  d.append('page', 'gantt');
+  var savedCant = GetAppIdItem('id_cantiere_gantt');
+  if (savedCant) { d.append('id_cantiere', savedCant); }
+  Routing(d);
 };
 function RefreshComputi(modalId)
 {
@@ -922,7 +935,7 @@ function SaveAttivita()
   var idField = document.querySelector('.attivitaid');
   data.append('action',                       'attivita_gantt_upsert');
   if (idField && idField.value)               { data.append('id', idField.value); }
-  data.append('id_cantiere',                  GetAppIdItem('id_cantiere') || '');
+  data.append('id_cantiere',                  GetAppIdItem('id_cantiere_gantt') || '');
   data.append('nome',                         document.getElementById(GetInputId('attnome')).value.trim());
   data.append('id_padre',                     document.getElementById(GetInputId('attpadre')).value);
   data.append('data_inizio_prevista',         document.getElementById(GetInputId('attdtinizioprev')).value);
@@ -1209,6 +1222,37 @@ document.addEventListener('click', function(event)
     var saved = GetAppIdItem('id_cantiere_computi');
     if (saved) d.append('id_cantiere', saved);
     Routing(d);
+    return;
+  }
+  // ── Gantt portfolio → cantiere ──
+  var apriGanttBtn = event.target.closest('.btnApriGantt');
+  if (apriGanttBtn)
+  {
+    var idCant = apriGanttBtn.dataset.id;
+    SetAppIdItem('id_cantiere_gantt', idCant);
+    var d = new FormData();
+    d.append('page', 'gantt');
+    d.append('id_cantiere', idCant);
+    Routing(d);
+    return;
+  }
+  // ── Gantt cantiere → portfolio ──
+  if (event.target.classList.contains('btnTornaPortfolio'))
+  {
+    var d = new FormData();
+    d.append('page', 'gantt');
+    Routing(d);
+    return;
+  }
+  // ── Gantt snapshot EVM ──
+  if (event.target.classList.contains('btnSnapshotEvm'))
+  {
+    var idCant = GetAppIdItem('id_cantiere_gantt');
+    if (!idCant) return;
+    var d = new FormData();
+    d.append('action', 'evm_snapshot');
+    d.append('id_cantiere', idCant);
+    Perform(d);
     return;
   }
   // ── Navigation via data-href ──

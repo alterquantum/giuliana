@@ -86,7 +86,7 @@ class Router {
                     $this->response->setDom((new DocumentoListController())->render());
                     break;
                 case 'gantt':
-                    $this->response->setDom((new GanttController())->render());
+                    $this->response->setDom((new GanttController($this->data))->render());
                     break;
                 case 'report':
                     $this->response->setDom((new ReportController())->render());

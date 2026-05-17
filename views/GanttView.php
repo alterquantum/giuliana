@@ -83,7 +83,11 @@ class GanttView {
             $html .= '<div class="col-6"><small class="text-muted d-block">BAC</small><small>&euro; ' . $bac . '</small></div>';
             $html .= '<div class="col-6"><small class="text-muted d-block">VAC</small><small class="' . $vacColorClass . '">&euro; ' . $vacFmt . '</small></div>';
             $html .= '</div>';
-            $html .= '<div class="mt-2 text-end"><small class="text-muted">Snapshot: ' . $dataSnapshot . '</small></div>';
+            $html .= '<div class="mt-3 d-flex align-items-center justify-content-between">';
+            $html .= '<small class="text-muted">Snapshot: ' . $dataSnapshot . '</small>';
+            $html .= '<button class="btn btn-sm btn-outline-primary btnApriGantt" data-id="' . htmlspecialchars($row['id_cantiere']) . '">'
+                   . '<i class="bi bi-calendar3-range me-1"></i>Gantt</button>';
+            $html .= '</div>';
             $html .= '</div></div></div>';
         }
 
@@ -94,9 +98,16 @@ class GanttView {
     public function display(array $ganttRows, array $evm): string {
         $html  = '<div class="p-4">';
         $html .= '<div class="d-flex align-items-center justify-content-between mb-4">';
+        $html .= '<div class="d-flex align-items-center gap-2">';
+        $html .= '<button class="btn btn-sm btn-outline-secondary btnTornaPortfolio"><i class="bi bi-arrow-left me-1"></i>Portfolio</button>';
         $html .= '<h4 class="fw-semibold mb-0"><i class="bi bi-calendar3-range me-2"></i>Gantt &amp; EVM</h4>';
+        $html .= '</div>';
+        $html .= '<div class="d-flex gap-2">';
+        $html .= '<button class="btn btn-outline-secondary btn-sm btnSnapshotEvm"><i class="bi bi-camera me-1"></i>Snapshot EVM</button>';
         $html .= '<button class="btn btn-primary btn-sm btnNewAttivita"><i class="bi bi-plus-lg me-1"></i>Aggiungi attivit&agrave;</button>';
         $html .= '</div>';
+        $html .= '</div>';
+        $html .= '<div class="alert alert-success d-none py-2 msgevm"><i class="bi bi-check-circle me-2"></i>Snapshot EVM salvato.</div>';
 
         $bac = (float) ($evm['bac'] ?? 0);
         $spi = (float) ($evm['spi'] ?? 0);
