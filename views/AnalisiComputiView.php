@@ -27,11 +27,21 @@ class AnalisiComputiView {
         $totNoli    = array_sum(array_column($righe, 'costo_noli'));
         $nLav       = count($righe);
 
+        // Operai medi stimati: media pesata n_operai × durata_giorni / durata_totale
+        $operaiMedia = 0;
+        $pesaTotale  = 0;
+        foreach ($righe as $r) {
+            $gg = (float)($r['durata_giorni'] ?? 0);
+            $op = (float)($r['n_operai']      ?? 0);
+            if ($gg > 0 && $op > 0) { $pesaTotale += $gg; $operaiMedia += $op * $gg; }
+        }
+        $operaiStimati = $pesaTotale > 0 ? (int) round($operaiMedia / $pesaTotale) : '—';
+
         $html .= '<div class="row g-3 mb-4">';
         $html .= $this->kpiCard('Lavorazioni', $nLav, 'bi-list-check', 'primary');
         $html .= $this->kpiCard('Durata totale', number_format($totGiorni, 1, ',', '.') . ' gg', 'bi-calendar-range', 'info');
+        $html .= $this->kpiCard('Operai stimati', $operaiStimati, 'bi-people-fill', 'danger');
         $html .= $this->kpiCard('Importo', number_format($totImporto, 2, ',', '.') . ' €', 'bi-currency-euro', 'success');
-        $html .= $this->kpiCard('Costo materiali', number_format($totMat, 2, ',', '.') . ' €', 'bi-boxes', 'warning');
         $html .= '</div>';
 
         // Tabella dettaglio
